@@ -1,5 +1,8 @@
-import { pickFireSubjects, type FireSubjectInput } from "./fire";
-import { priorityRankMap } from "./priorityRanks";
+import {
+  calculateImportanceWeight,
+  pickFireSubjects,
+  type FireSubjectInput
+} from "./fire";
 import { subjects } from "./subjects";
 import { buildTargetMap } from "./targets";
 import type { StudyCycle, SubjectStatus } from "./types";
@@ -63,27 +66,74 @@ export const getLastAttemptDate = (cycles: StudyCycle[], subjectId: number): Dat
   }, new Date(subjectCycles[0].date));
 };
 
-const buildFireInputs = (cycles: StudyCycle[], statuses: SubjectStatus[]): FireSubjectInput[] =>
+export const getLastEffectiveDate = (cycles: StudyCycle[], subjectId: number): Date | null => {
+  const effectiveCycles = cycles.filter(
+    (cycle) => cycle.subjectId === subjectId && isEffectiveCycle(cycle.accuracy)
+  );
+  if (effectiveCycles.length === 0) return null;
+
+  return effectiveCycles.reduce<Date>((latest, cycle) => {
+    const current = new Date(cycle.date);
+    return current.getTime() > latest.getTime() ? current : latest;
+  }, new Date(effectiveCycles[0].date));
+};
+
+const isSameDate = (left: Date, right: Date): boolean =>
+  left.getFullYear() === right.getFullYear() &&
+  left.getMonth() === right.getMonth() &&
+  left.getDate() === right.getDate();
+
+const studiedEffectivelyToday = (
+  cycles: StudyCycle[],
+  subjectId: number,
+  referenceDate: Date
+): boolean =>
+  cycles.some(
+    (cycle) =>
+      cycle.subjectId === subjectId &&
+      isEffectiveCycle(cycle.accuracy) &&
+      isSameDate(new Date(cycle.date), referenceDate)
+  );
+
+const buildFireInputs = (
+  cycles: StudyCycle[],
+  statuses: SubjectStatus[],
+  referenceDate: Date
+): FireSubjectInput[] =>
   statuses.map((status) => {
-    const priorityRank = priorityRankMap[status.subjectId] ?? subjects.length;
-    const lastStudiedAt = getLastAttemptDate(cycles, status.subjectId);
-    const totalCount = Math.max(status.target, 1);
-    const doneCount = status.effectiveCount;
+    const lastEffectiveAt = getLastEffectiveDate(cycles, status.subjectId);
+    const targetLaps = Math.max(status.target, 1);
+    const effectiveLaps = status.effectiveCount;
+    const studiedToday = studiedEffectivelyToday(cycles, status.subjectId, referenceDate);
 
     return {
       subjectId: status.subjectId,
-      priorityRank,
-      lastStudiedAt,
-      totalCount,
-      doneCount
+      lastEffectiveAt,
+      targetLaps,
+      effectiveLaps,
+      studiedToday
     };
   });
 
-export const pickPrioritySubjects = (cycles: StudyCycle[], statuses: SubjectStatus[]) => {
-  const fireInputs = buildFireInputs(cycles, statuses);
-  const prioritized = pickFireSubjects(fireInputs);
+export const pickPrioritySubjects = (
+  cycles: StudyCycle[],
+  statuses: SubjectStatus[],
+  referenceDate = new Date()
+) => {
+  const fireInputs = buildFireInputs(cycles, statuses, referenceDate);
+  const prioritized = pickFireSubjects(fireInputs, referenceDate);
 
   return prioritized
-    .map((item) => statuses.find((status) => status.subjectId === item.subjectId))
+    .map((item) => {
+      const status = statuses.find((candidate) => candidate.subjectId === item.subjectId);
+      if (!status) return null;
+
+      return {
+        ...status,
+        importanceWeight: calculateImportanceWeight(item.subjectId),
+        forgettingFactor: item.forgettingFactor,
+        shortageFactor: item.shortageFactor
+      };
+    })
     .filter((status): status is SubjectStatus => Boolean(status));
 };

@@ -1,38 +1,38 @@
 import {
   calculateFireScore,
+  calculateForgettingFactor,
   calculateForgettingScore,
-  calculateMasteryGap,
-  calculatePriorityWeight,
+  calculateImportanceWeight,
+  calculateShortageFactor,
   pickFireSubjects,
   type FireSubjectInput
 } from "../fire";
 
 describe("fire score calculation", () => {
-  test("forgetting score follows Ebbinghaus-like decay", () => {
+  test("forgetting factor blends Ebbinghaus and linear decay", () => {
     const reference = new Date("2024-02-10T00:00:00Z");
-    const halfDayAgo = new Date("2024-02-09T12:00:00Z");
-    const twoDaysAgo = new Date("2024-02-08T00:00:00Z");
-    const oneWeekAgo = new Date("2024-02-03T00:00:00Z");
+    const yesterday = new Date("2024-02-09T00:00:00Z");
+    const tenDaysAgo = new Date("2024-01-31T00:00:00Z");
 
-    expect(calculateForgettingScore(halfDayAgo, reference)).toBeLessThan(
-      calculateForgettingScore(twoDaysAgo, reference)
+    expect(calculateForgettingFactor(yesterday, reference)).toBeLessThan(
+      calculateForgettingFactor(tenDaysAgo, reference)
     );
-    expect(calculateForgettingScore(twoDaysAgo, reference)).toBeLessThan(
-      calculateForgettingScore(oneWeekAgo, reference)
-    );
-    expect(calculateForgettingScore(oneWeekAgo, reference)).toBeCloseTo(0.99, 2);
-    expect(calculateForgettingScore(null, reference)).toBe(1.0);
+    expect(calculateForgettingFactor(null, reference)).toBe(1.5);
+    expect(calculateForgettingScore(tenDaysAgo, reference)).toBeLessThan(1);
   });
 
-  test("mastery gap shrinks as doneCount grows", () => {
-    expect(calculateMasteryGap(0, 10)).toBe(1);
-    expect(calculateMasteryGap(5, 10)).toBe(0.5);
-    expect(calculateMasteryGap(10, 10)).toBe(0);
+  test("shortage factor drops to zero once the goal is met", () => {
+    expect(calculateShortageFactor(0, 4)).toBeCloseTo(1.25);
+    expect(calculateShortageFactor(3, 4)).toBeCloseTo(0.5);
+    expect(calculateShortageFactor(4, 4)).toBe(0);
   });
 
-  test("priority weight is inverse of rank", () => {
-    expect(calculatePriorityWeight(1)).toBe(1);
-    expect(calculatePriorityWeight(5)).toBeCloseTo(0.2);
+  test("importance weight follows category mapping", () => {
+    expect(calculateImportanceWeight(10)).toBe(1.3);
+    expect(calculateImportanceWeight(2)).toBe(1.2);
+    expect(calculateImportanceWeight(3)).toBe(1.0);
+    expect(calculateImportanceWeight(14)).toBe(0.9);
+    expect(calculateImportanceWeight(17)).toBe(0.8);
   });
 
   test("fire subjects are ranked by fire score with tie breakers", () => {
@@ -40,31 +40,40 @@ describe("fire score calculation", () => {
     const inputs: FireSubjectInput[] = [
       {
         subjectId: 1,
-        priorityRank: 1,
-        lastStudiedAt: new Date("2024-02-09T00:00:00Z"),
-        totalCount: 10,
-        doneCount: 5
+        lastEffectiveAt: new Date("2024-02-09T00:00:00Z"),
+        targetLaps: 3,
+        effectiveLaps: 1,
+        studiedToday: false
       },
       {
-        subjectId: 2,
-        priorityRank: 2,
-        lastStudiedAt: new Date("2024-01-01T00:00:00Z"),
-        totalCount: 10,
-        doneCount: 2
+        subjectId: 11,
+        lastEffectiveAt: null,
+        targetLaps: 4,
+        effectiveLaps: 0,
+        studiedToday: false
       },
       {
         subjectId: 3,
-        priorityRank: 2,
-        lastStudiedAt: new Date("2023-12-01T00:00:00Z"),
-        totalCount: 20,
-        doneCount: 10
+        lastEffectiveAt: new Date("2024-01-01T00:00:00Z"),
+        targetLaps: 3,
+        effectiveLaps: 0,
+        studiedToday: true
+      },
+      {
+        subjectId: 10,
+        lastEffectiveAt: new Date("2024-02-05T00:00:00Z"),
+        targetLaps: 4,
+        effectiveLaps: 1,
+        studiedToday: false
       }
     ];
 
     const [first, second] = pickFireSubjects(inputs, reference);
 
-    expect(first.subjectId).toBe(2); // higher fire score from larger gap and forgetting
-    expect(second.subjectId).toBe(3); // tie on score, older study date wins
+    expect(first.subjectId).toBe(11); // 未学習かつ重要度の高い分野が優先
+    expect(second.subjectId).toBe(10); // 目標不足と忘却の組み合わせで上位
+    expect(first.daysSinceLastEffective).toBeNull();
+    expect(second.daysSinceLastEffective).toBeCloseTo(5);
     expect(calculateFireScore(inputs[0], reference)).toBeLessThan(calculateFireScore(inputs[1], reference));
   });
 
@@ -73,17 +82,17 @@ describe("fire score calculation", () => {
     const inputs: FireSubjectInput[] = [
       {
         subjectId: 10,
-        priorityRank: 5,
-        lastStudiedAt: null,
-        totalCount: 4,
-        doneCount: 1
+        lastEffectiveAt: null,
+        targetLaps: 4,
+        effectiveLaps: 1,
+        studiedToday: false
       },
       {
         subjectId: 11,
-        priorityRank: 5,
-        lastStudiedAt: null,
-        totalCount: 4,
-        doneCount: 1
+        lastEffectiveAt: null,
+        targetLaps: 4,
+        effectiveLaps: 1,
+        studiedToday: false
       }
     ];
 
