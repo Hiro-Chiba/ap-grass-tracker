@@ -1,46 +1,62 @@
-# ap-grass-tracker
+# AP Grass Tracker
 
-応用情報技術者試験向けに、分野別の周回学習を GitHub 草風 UI で可視化する進捗管理アプリ。
-
-## 概要
-本プロジェクトは、応用情報技術者試験に特化した学習進捗管理アプリです。
-学習時間は一切記録せず、分野ごとの周回学習と正答率に基づいて進捗を評価します。
-
-正答率 70%以上の周回のみを「有効周回」として扱い、GitHub のコントリビューショングラフに似た草 UI により、
-合格に寄与する学習だけが横方向に積み上がる設計となっています。
-
-## 特徴
-- 学習時間を管理しない設計
-- 正答率 70%以上のみを進捗として評価
-- 分野ごとの理解度と網羅度を同時に可視化
-- 応用情報技術者試験の出題体系に最適化
-- スマホ片手操作を前提とした低摩擦 UX
-
-## 主要機能
-- 分野一覧（応用情報 23 分野）
-- 周回記録（分野選択 + 正答率入力）
-- 草 UI（□：無効周回、■：有効周回）
-- 分野別の目標周回数と合格ライン表示（縦線）
-- Stats 画面（KPI 3 指標）
-- 試験日カウントダウン
-- ダークモード
-- 初回オンボーディング（3 画面）
-
-## 技術スタック
-- Next.js（App Router）
-- TypeScript（strict）
-- Prisma
-- SQLite
-- Tailwind CSS
-
-## 設計思想
-- 学習の最小単位は「分野を 1 周解く」
-- 正答率 70%以上の周回のみを有効とする
-- 周回数は DB に保存せず計算値とする
-- 努力量ではなく「合格に近づく学習」だけを可視化する
+応用情報技術者試験向けの学習進捗を「周回」と「正答率」で可視化する Next.js アプリです。草UIと縦線だけで合格戦略を把握できることを目的にしています。
 
 ## セットアップ
+
+1. 依存関係をインストールします。
+
 ```bash
 npm install
-npx prisma migrate dev
+```
+
+2. 環境変数ファイルを設定します（Vercel Storage の Neon から発行される接続文字列を使用してください）。
+
+```bash
+cp .env.example .env
+```
+
+3. Prisma のマイグレーションと seed を実行し、PostgreSQL (Neon) データベースを初期化します。
+
+```bash
+npx prisma db push
+npx prisma db seed
+```
+
+4. 開発サーバーを起動します。
+
+```bash
 npm run dev
+```
+
+## スクリプト
+
+- `npm run dev`: Next.js 開発サーバーを起動
+- `npm run build`: 本番ビルド
+- `npm run typecheck`: TypeScript の型チェック
+- `npm run lint`: ESLint（Next.js 標準）
+- `npm test`: Jest によるユニットテスト
+
+## ディレクトリ構成
+
+- `app/` - App Router ベースのページ (`/grid`, `/log`, `/stats`, `/onboarding`)
+- `components/grass/` - 草UI用の Square / SubjectRow / TargetLine
+- `lib/` - 計算ロジック、Prisma クライアント、定数
+- `prisma/` - Prisma スキーマと seed
+
+## 主要仕様
+
+- 正答率70%以上のみを有効周回（■）としてカウント
+- テクノロジ系は3周（DB/NW/SECは4周）、マネジメント/ストラテジは2周が目標
+- 目標位置に縦線を引き、到達分野数を合格圏として表示
+- 停滞分野（挑戦あり・有効0）と試験日カウントダウンをKPIとして提示
+
+## テスト駆動のロジック
+
+`lib/calc.ts` に合格判定やKPI集計の純粋関数をまとめ、`lib/__tests__/calc.test.ts` でテストしています。
+
+## Vercel Storage (Neon) へのデプロイと接続
+
+- Vercel の Storage で Neon を作成すると、`DATABASE_URL` が自動生成されます。
+- `.env` に `DATABASE_URL="postgresql://...?...sslmode=require"` を設定した上で、`npx prisma db push` と `npx prisma db seed` を実行してください。
+- CI は `.github/workflows/ci.yml` で `npm run typecheck` / `lint` / `test` / `build` を通す構成です。Neon への接続情報が必要な場合はリポジトリのシークレットに設定してください。

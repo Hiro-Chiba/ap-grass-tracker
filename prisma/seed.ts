@@ -1,46 +1,40 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@prisma/client";
+import { subjects } from "../lib/subjects";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.studyCycle.deleteMany();
+  await prisma.subject.deleteMany();
+
   await prisma.subject.createMany({
+    data: subjects.map((subject) => ({
+      id: subject.id,
+      name: subject.name,
+      category: subject.category
+    })),
+    skipDuplicates: true
+  });
+
+  await prisma.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('"Subject"', 'id'), ${subjects.length});`
+  );
+
+  await prisma.studyCycle.createMany({
     data: [
-      // Technology
-      { name: "基礎理論", category: "technology" },
-      { name: "アルゴリズムとプログラミング", category: "technology" },
-      { name: "コンピュータ構成要素", category: "technology" },
-      { name: "システム構成要素", category: "technology" },
-      { name: "ソフトウェア", category: "technology" },
-      { name: "ハードウェア", category: "technology" },
-      { name: "ユーザーインタフェース", category: "technology" },
-      { name: "情報メディア", category: "technology" },
-      { name: "データベース", category: "technology" },
-      { name: "ネットワーク", category: "technology" },
-      { name: "セキュリティ", category: "technology" },
-      { name: "システム開発技術", category: "technology" },
-      { name: "ソフトウェア開発管理技術", category: "technology" },
-
-      // Management
-      { name: "プロジェクトマネジメント", category: "management" },
-      { name: "サービスマネジメント", category: "management" },
-      { name: "システム監査", category: "management" },
-
-      // Strategy
-      { name: "システム戦略", category: "strategy" },
-      { name: "システム企画", category: "strategy" },
-      { name: "経営戦略マネジメント", category: "strategy" },
-      { name: "技術戦略マネジメント", category: "strategy" },
-      { name: "ビジネスインダストリ", category: "strategy" },
-      { name: "企業活動", category: "strategy" },
-      { name: "法務", category: "strategy" },
+      { subjectId: 7, accuracy: 85 },
+      { subjectId: 8, accuracy: 60 },
+      { subjectId: 9, accuracy: 75 }
     ],
-  })
+    skipDuplicates: true
+  });
 }
 
 main()
-  .then(() => prisma.$disconnect())
-  .catch(async e => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
   })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
