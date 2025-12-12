@@ -19,38 +19,46 @@ const sortByDate = (cycles: StudyCycle[]) =>
 export default function SubjectRow({ subject, cycles, status, isPriority }: SubjectRowProps) {
   const target = getTargetForSubject(subject);
   const orderedCycles = sortByDate(cycles);
-  const trackWidth = target * SLOT_WIDTH + SQUARE_SIZE;
+  const maxSlots = Math.max(target, orderedCycles.length || 1);
+  const trackWidth = maxSlots * SLOT_WIDTH + SQUARE_SIZE;
 
   const rowClassName = clsx(
-    "flex flex-col gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-3 py-4 shadow-sm sm:gap-4 dark:border-slate-800/60 dark:bg-slate-900/70 md:flex-row md:items-start",
+    "flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-5 shadow-sm sm:gap-5 dark:border-slate-800/60 dark:bg-slate-900/70",
     isPriority && "outline outline-2 outline-orange-200/70 dark:outline-orange-400/40"
   );
 
   return (
     <div className={rowClassName}>
-      <div className="flex w-full flex-col gap-1 text-slate-900 dark:text-white md:w-56">
-        <div className="flex items-center gap-2 text-base font-semibold leading-6">
-          {isPriority ? <span aria-hidden>🔥</span> : null}
-          <span className="truncate">{subject.name}</span>
+      <div className="flex items-start justify-between gap-3 text-slate-900 dark:text-white">
+        <div className="flex flex-col gap-1">
+          <span className="w-fit rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800/70 dark:text-slate-300">
+            {subject.category}
+          </span>
+          <p className="text-lg font-bold leading-6 sm:text-xl">{subject.name}</p>
         </div>
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {subject.category}
-        </span>
+        {isPriority ? (
+          <span className="flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-sm font-semibold text-orange-600 shadow-inner dark:bg-orange-500/15 dark:text-orange-200" aria-label="今日やる分野">
+            <span aria-hidden>🔥</span>
+            今日やる
+          </span>
+        ) : null}
       </div>
-      <div className="flex w-full flex-col gap-2 md:flex-1">
-        <div
-          className="relative flex items-center gap-1 overflow-visible"
-          style={{ width: trackWidth }}
-          aria-label={`${subject.name} の進捗`}
-        >
-          <TargetLine position={target} alignToEnd />
-          {orderedCycles.map((cycle) => (
-            <Square key={cycle.id} accuracy={cycle.accuracy} />
-          ))}
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex w-full justify-center">
+          <div
+            className="relative flex items-center gap-1 overflow-visible"
+            style={{ width: trackWidth }}
+            aria-label={`${subject.name} の進捗`}
+          >
+            <TargetLine position={target} alignToEnd label="目標ライン" />
+            {orderedCycles.map((cycle) => (
+              <Square key={cycle.id} accuracy={cycle.accuracy} />
+            ))}
+          </div>
         </div>
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-200 md:text-sm">
+        <div className="flex w-full items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-200 sm:text-sm">
           <span className="text-slate-500 dark:text-slate-400">目標 {target} 周</span>
-          <span>有効 {status?.effectiveCount ?? 0} 周</span>
+          <span className="text-slate-900 dark:text-white">有効 {status?.effectiveCount ?? 0} / {target}</span>
         </div>
       </div>
     </div>

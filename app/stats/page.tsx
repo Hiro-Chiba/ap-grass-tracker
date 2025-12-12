@@ -15,14 +15,15 @@ function StatNumber({ label, value }: { label: string; value: string }) {
 
 export default function StatsPage() {
   const { cycles } = useCycleStore();
-  const { totalEffective, inGoalSubjects, stagnantSubjects } = aggregateKpis(cycles);
+  const { inGoalSubjects, notInGoalSubjects, prioritySubjects } = aggregateKpis(cycles);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">迷ったら、未達と🔥を埋める。</p>
       <div className="grid gap-4 sm:grid-cols-3">
         <StatNumber label="合格分野数" value={`${inGoalSubjects} / ${SUBJECT_COUNT}`} />
-        <StatNumber label="総有効周回数" value={`${totalEffective} / 62`} />
-        <StatNumber label="停滞分野数" value={`${stagnantSubjects}`} />
+        <StatNumber label="未達分野数" value={`${notInGoalSubjects}`} />
+        <StatNumber label="今日やる分野数" value={`${prioritySubjects}`} />
       </div>
     </div>
   );
