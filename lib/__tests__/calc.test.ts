@@ -7,6 +7,7 @@ import {
   getLastAttemptDate,
   getSubjectStatus,
   getSubjectStatuses,
+  hasRecentEffectiveCycle,
   isEffectiveCycle,
   pickPrioritySubject
 } from "../calc";
@@ -49,9 +50,9 @@ describe("calc utilities", () => {
 
   test("aggregate KPIs returns totals", () => {
     const kpi = aggregateKpis(cycles);
-    expect(kpi.totalEffective).toBe(3);
-    expect(kpi.inGoalSubjects).toBeGreaterThanOrEqual(0);
-    expect(kpi.stagnantSubjects).toBeGreaterThanOrEqual(0);
+    expect(kpi.inGoalSubjects).toBe(0);
+    expect(kpi.notInGoalSubjects).toBe(subjects.length);
+    expect(kpi.prioritySubjects).toBe(1);
   });
 
   test("last attempt date follows the most recent cycle", () => {
@@ -65,15 +66,26 @@ describe("calc utilities", () => {
     expect(date?.toISOString().startsWith("2024-02-01")).toBe(true);
   });
 
-  test("priority subject is the oldest unmet line with ineffective cycles", () => {
+  test("priority subject is the stalled technology area without recent gains", () => {
+    const daysAgo = (days: number) => {
+      const date = new Date();
+      date.setDate(date.getDate() - days);
+      return date.toISOString();
+    };
+
     const priorityCycles: StudyCycle[] = [
-      { id: "p1", subjectId: 1, accuracy: 60, date: "2024-01-01" },
-      { id: "p2", subjectId: 1, accuracy: 80, date: "2024-01-02" },
-      { id: "p3", subjectId: 2, accuracy: 65, date: "2023-12-01" },
-      { id: "p4", subjectId: 3, accuracy: 50, date: "2024-01-10" }
+      { id: "p1", subjectId: 1, accuracy: 60, date: daysAgo(12) },
+      { id: "p2", subjectId: 1, accuracy: 80, date: daysAgo(11) },
+      { id: "p3", subjectId: 2, accuracy: 75, date: daysAgo(2) },
+      { id: "p4", subjectId: 13, accuracy: 80, date: daysAgo(10) },
+      { id: "p5", subjectId: 13, accuracy: 40, date: daysAgo(9) }
     ];
+
+    expect(hasRecentEffectiveCycle(priorityCycles, 1)).toBe(false);
+    expect(hasRecentEffectiveCycle(priorityCycles, 2)).toBe(true);
+
     const statuses = getSubjectStatuses(priorityCycles);
     const priority = pickPrioritySubject(priorityCycles, statuses);
-    expect(priority?.subjectId).toBe(2);
+    expect(priority?.subjectId).toBe(1);
   });
 });

@@ -34,12 +34,17 @@ export const countSubjectsInGoal = (statuses: SubjectStatus[]): number =>
 export const countStagnantSubjects = (statuses: SubjectStatus[]): number =>
   statuses.filter((status) => status.effectiveCount === 0 && status.ineffectiveCount > 0).length;
 
-export const aggregateKpis = (cycles: StudyCycle[]): { totalEffective: number; inGoalSubjects: number; stagnantSubjects: number } => {
+export const aggregateKpis = (
+  cycles: StudyCycle[]
+): { inGoalSubjects: number; notInGoalSubjects: number; prioritySubjects: number } => {
   const statuses = subjects.map((subject) => getSubjectStatus(cycles, subject.id));
+  const inGoalSubjects = countSubjectsInGoal(statuses);
+  const notInGoalSubjects = statuses.length - inGoalSubjects;
+  const prioritySubjects = pickPrioritySubject(cycles, statuses) ? 1 : 0;
   return {
-    totalEffective: countEffectiveCycles(cycles),
-    inGoalSubjects: countSubjectsInGoal(statuses),
-    stagnantSubjects: countStagnantSubjects(statuses)
+    inGoalSubjects,
+    notInGoalSubjects,
+    prioritySubjects
   };
 };
 
@@ -56,14 +61,32 @@ export const getLastAttemptDate = (cycles: StudyCycle[], subjectId: number): Dat
   }, new Date(subjectCycles[0].date));
 };
 
+export const hasRecentEffectiveCycle = (cycles: StudyCycle[], subjectId: number, days = 7): boolean => {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  return cycles.some(
+    (cycle) =>
+      cycle.subjectId === subjectId &&
+      isEffectiveCycle(cycle.accuracy) &&
+      new Date(cycle.date).getTime() >= since.getTime()
+  );
+};
+
 export const pickPrioritySubject = (cycles: StudyCycle[], statuses: SubjectStatus[]): SubjectStatus | undefined => {
+  const subjectOrder = subjects.map((subject) => subject.id);
+
   const candidates = statuses
-    .map((status) => ({ status, lastTriedAt: getLastAttemptDate(cycles, status.subjectId) }))
-    .filter((item) => item.lastTriedAt && !item.status.inGoal && item.status.ineffectiveCount > 0)
+    .filter((status) => status.effectiveCount < status.target)
+    .filter((status) => cycles.some((cycle) => cycle.subjectId === status.subjectId))
+    .filter((status) => !hasRecentEffectiveCycle(cycles, status.subjectId))
     .sort((a, b) => {
-      if (!a.lastTriedAt || !b.lastTriedAt) return 0;
-      return a.lastTriedAt.getTime() - b.lastTriedAt.getTime() || a.status.subjectId - b.status.subjectId;
+      if (a.category !== b.category) {
+        if (a.category === "technology") return -1;
+        if (b.category === "technology") return 1;
+      }
+      return subjectOrder.indexOf(a.subjectId) - subjectOrder.indexOf(b.subjectId);
     });
 
-  return candidates[0]?.status;
+  return candidates[0];
 };
