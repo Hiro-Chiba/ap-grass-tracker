@@ -15,3 +15,10 @@ export type SubjectStatus = {
   inGoal: boolean;
   category: Category;
 };
+
+export type PrioritySubjectStatus = SubjectStatus & {
+  importanceWeight: number;
+  forgettingFactor: number;
+  shortageFactor: number;
+  daysSinceLastEffective: number | null;
+};

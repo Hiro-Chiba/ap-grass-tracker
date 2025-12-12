@@ -5,7 +5,7 @@ import {
 } from "./fire";
 import { subjects } from "./subjects";
 import { buildTargetMap } from "./targets";
-import type { StudyCycle, SubjectStatus } from "./types";
+import type { PrioritySubjectStatus, StudyCycle, SubjectStatus } from "./types";
 
 export const isEffectiveCycle = (accuracy: number): boolean => accuracy >= 70;
 
@@ -119,7 +119,7 @@ export const pickPrioritySubjects = (
   cycles: StudyCycle[],
   statuses: SubjectStatus[],
   referenceDate = new Date()
-) => {
+): PrioritySubjectStatus[] => {
   const fireInputs = buildFireInputs(cycles, statuses, referenceDate);
   const prioritized = pickFireSubjects(fireInputs, referenceDate);
 
@@ -130,10 +130,11 @@ export const pickPrioritySubjects = (
 
       return {
         ...status,
-        importanceWeight: calculateImportanceWeight(item.subjectId),
+        importanceWeight: item.importanceWeight,
         forgettingFactor: item.forgettingFactor,
-        shortageFactor: item.shortageFactor
+        shortageFactor: item.shortageFactor,
+        daysSinceLastEffective: item.daysSinceLastEffective
       };
     })
-    .filter((status): status is SubjectStatus => Boolean(status));
+    .filter((status): status is PrioritySubjectStatus => Boolean(status));
 };
