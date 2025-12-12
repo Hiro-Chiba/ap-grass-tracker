@@ -4,10 +4,13 @@
 
 ## セットアップ
 
-1. 依存関係をインストールします。
+1. 依存関係をインストールします。`package-lock.json` がない場合は先にロックファイルを生成してから `npm ci` を実行してください。
 
 ```bash
-npm install
+# 初回のみ（ロックファイル生成）
+npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+# 依存関係のインストール
+npm ci
 ```
 
 2. 環境変数ファイルを設定します（Vercel Storage の Neon から発行される接続文字列を使用してください）。
