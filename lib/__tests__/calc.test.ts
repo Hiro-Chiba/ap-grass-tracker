@@ -82,6 +82,6 @@ describe("calc utilities", () => {
 
     const statuses = getSubjectStatuses(priorityCycles);
     const priority = pickPrioritySubjects(priorityCycles, statuses);
-    expect(priority.map((item) => item.subjectId)).toEqual([1, 3]);
+    expect(priority.map((item) => item.subjectId)).toEqual([9, 10]);
   });
 });

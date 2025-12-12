@@ -14,6 +14,7 @@ export type FireSubjectResult = FireSubjectInput & {
 };
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
+const EBBINGHAUS_DECAY_DAYS = 1.5; // 1.5日で記憶保持率がおよそ半減する近似値
 
 const getDaysSince = (lastStudiedAt: Date | null, referenceDate: Date): number | null => {
   if (!lastStudiedAt) return null;
@@ -23,11 +24,12 @@ const getDaysSince = (lastStudiedAt: Date | null, referenceDate: Date): number |
 export const calculateForgettingScore = (lastStudiedAt: Date | null, referenceDate = new Date()): number => {
   const days = getDaysSince(lastStudiedAt, referenceDate);
   if (days === null) return 1.0;
-  if (days < 1) return 0.2;
-  if (days < 3) return 0.4;
-  if (days < 7) return 0.6;
-  if (days < 30) return 0.8;
-  return 1.0;
+
+  const elapsedDays = Math.max(days, 0);
+  const retention = Math.exp(-elapsedDays / EBBINGHAUS_DECAY_DAYS);
+  const forgettingScore = 1 - retention;
+
+  return Math.min(1, Math.max(0, forgettingScore));
 };
 
 export const calculateMasteryGap = (doneCount: number, totalCount: number): number => {
