@@ -11,6 +11,10 @@ export default function StatsPage() {
   const statuses = getSubjectStatuses(cycles);
   const remainingDays = daysUntilExam();
   const alertColor = remainingDays < 30 ? "text-red-600" : "text-emerald-600";
+  const ineffectiveHotspots = statuses
+    .filter((status) => status.ineffectiveCount > 0)
+    .sort((a, b) => b.ineffectiveCount - a.ineffectiveCount || a.effectiveCount - b.effectiveCount)
+    .slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -23,6 +27,28 @@ export default function StatsPage() {
         <StatCard title="合格圏分野" value={`${inGoalSubjects} / ${SUBJECT_COUNT}`} description="縦線到達分野" />
         <StatCard title="総有効周回" value={`${totalEffective} / 62`} description="accuracy 70%以上の件数" />
         <StatCard title="停滞分野" value={`${stagnantSubjects}`} description="挑戦あり・有効0" />
+      </div>
+
+      <div className="rounded border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
+        <p className="text-xs uppercase tracking-wide text-red-700 dark:text-red-200">無効が多い分野</p>
+        {ineffectiveHotspots.length > 0 ? (
+          <ul className="mt-2 space-y-1 text-sm text-red-800 dark:text-red-100">
+            {ineffectiveHotspots.map((status) => {
+              const subject = subjects.find((item) => item.id === status.subjectId);
+              return (
+                <li key={status.subjectId} className="flex items-center justify-between rounded border border-red-200 bg-white/70 px-3 py-2 dark:border-red-700 dark:bg-red-900/40">
+                  <div>
+                    <p className="font-semibold">{subject?.name}</p>
+                    <p className="text-[11px]">無効 {status.ineffectiveCount} / 有効 {status.effectiveCount}</p>
+                  </div>
+                  <span className="rounded bg-red-700 px-2 py-1 text-[11px] font-semibold text-white">理解不足を解消</span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-red-800 dark:text-red-100">無効周回はありません。維持のみに集中してください。</p>
+        )}
       </div>
 
       <div className="rounded border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/30">
