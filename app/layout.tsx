@@ -16,6 +16,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <header className="border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
           <div className="mx-auto flex max-w-5xl items-center justify-between">
             <nav className="flex gap-4 text-sm font-semibold">
+              <Link href="/" className="hover:underline">
+                ホーム
+              </Link>
               <Link href="/grid" className="hover:underline">
                 草UI
               </Link>
@@ -23,10 +26,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 ログ
               </Link>
               <Link href="/stats" className="hover:underline">
-                Stats
+                統計
               </Link>
               <Link href="/onboarding" className="hover:underline">
-                Onboarding
+                オンボーディング
               </Link>
             </nav>
             <ThemeToggle />
