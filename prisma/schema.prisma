@@ -1,0 +1,26 @@
+// Prisma schema generated according to project plans
+// Database: PostgreSQL (Vercel Storage / Neon)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subject {
+  id       Int          @id @default(autoincrement())
+  name     String
+  category String       // technology | management | strategy
+  cycles   StudyCycle[]
+}
+
+model StudyCycle {
+  id        Int      @id @default(autoincrement())
+  subjectId Int
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  date      DateTime @default(now())
+  accuracy  Int      // 0–100
+}
