@@ -20,22 +20,22 @@ export default function SubjectRow({ subject, cycles, status, isPriority }: Subj
   const target = getTargetForSubject(subject);
   const orderedCycles = sortByDate(cycles);
   const minWidth = Math.max(orderedCycles.length, target) * SLOT_WIDTH + SQUARE_SIZE;
-  const isInGoal = status?.effectiveCount !== undefined ? status.effectiveCount >= target : false;
 
   const rowClassName = clsx(
-    "flex items-center gap-4 rounded-md px-3 py-3",
-    isPriority ? "bg-red-100" : !isInGoal ? "bg-red-50" : "bg-white"
+    "flex items-center gap-4 rounded-xl border border-slate-200/70 bg-white/80 px-3 py-4 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/70",
+    isPriority && "outline outline-2 outline-orange-200/70 dark:outline-orange-400/40"
   );
 
   return (
     <div className={rowClassName}>
-      <div className="flex w-44 items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-        {isPriority ? (
-          <span className="flex items-center gap-1 rounded-full bg-red-200 px-2 py-1 text-[11px] font-bold text-red-800">
-            🔥 <span>今日やる</span>
-          </span>
-        ) : null}
-        <span className="truncate">{subject.name}</span>
+      <div className="flex w-48 flex-col gap-1 text-slate-900 dark:text-white">
+        <div className="flex items-center gap-2 text-base font-semibold">
+          {isPriority ? <span aria-hidden>🔥</span> : null}
+          <span className="truncate">{subject.name}</span>
+        </div>
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {subject.category}
+        </span>
       </div>
       <div className="relative flex items-center gap-1" style={{ minWidth }} aria-label={`${subject.name} の進捗`}>
         <TargetLine position={target} />
@@ -43,6 +43,9 @@ export default function SubjectRow({ subject, cycles, status, isPriority }: Subj
           <Square key={cycle.id} accuracy={cycle.accuracy} />
         ))}
       </div>
+      <div className="ml-auto text-sm font-semibold text-slate-700 dark:text-slate-200">{`${
+        status?.effectiveCount ?? 0
+      } / ${target}`}</div>
     </div>
   );
 }

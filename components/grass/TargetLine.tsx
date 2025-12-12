@@ -5,7 +5,10 @@ export default function TargetLine({ position }: { position: number }) {
 
   return (
     <div className="pointer-events-none absolute inset-y-0" style={{ left: `${offset}px` }}>
-      <span className="block h-full w-[3px] bg-rose-500" aria-label={`目標周回 ${position}`} />
+      <span
+        className="block h-full w-[8px] bg-orange-500/60 shadow-[0_0_0_1px_rgba(255,115,29,0.6)]"
+        aria-label={`目標周回 ${position}`}
+      />
     </div>
   );
 }
