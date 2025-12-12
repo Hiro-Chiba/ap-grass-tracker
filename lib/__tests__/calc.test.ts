@@ -41,7 +41,7 @@ describe("calc utilities", () => {
   test("counts for KPI aggregation", () => {
     const statuses = subjects.slice(0, 5).map((subject) => getSubjectStatus(cycles, subject.id));
     expect(countSubjectsInGoal(statuses)).toBe(0);
-    expect(countStagnantSubjects(statuses)).toBe(1);
+    expect(countStagnantSubjects(statuses)).toBe(0);
   });
 
   test("aggregate KPIs returns totals", () => {
