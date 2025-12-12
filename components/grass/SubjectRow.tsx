@@ -19,17 +19,17 @@ const sortByDate = (cycles: StudyCycle[]) =>
 export default function SubjectRow({ subject, cycles, status, isPriority }: SubjectRowProps) {
   const target = getTargetForSubject(subject);
   const orderedCycles = sortByDate(cycles);
-  const minWidth = Math.max(orderedCycles.length, target) * SLOT_WIDTH + SQUARE_SIZE;
+  const trackWidth = target * SLOT_WIDTH + SQUARE_SIZE;
 
   const rowClassName = clsx(
-    "flex items-center gap-4 rounded-xl border border-slate-200/70 bg-white/80 px-3 py-4 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/70",
+    "flex flex-col gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-3 py-4 shadow-sm sm:gap-4 dark:border-slate-800/60 dark:bg-slate-900/70 md:flex-row md:items-start",
     isPriority && "outline outline-2 outline-orange-200/70 dark:outline-orange-400/40"
   );
 
   return (
     <div className={rowClassName}>
-      <div className="flex w-48 flex-col gap-1 text-slate-900 dark:text-white">
-        <div className="flex items-center gap-2 text-base font-semibold">
+      <div className="flex w-full flex-col gap-1 text-slate-900 dark:text-white md:w-56">
+        <div className="flex items-center gap-2 text-base font-semibold leading-6">
           {isPriority ? <span aria-hidden>🔥</span> : null}
           <span className="truncate">{subject.name}</span>
         </div>
@@ -37,15 +37,22 @@ export default function SubjectRow({ subject, cycles, status, isPriority }: Subj
           {subject.category}
         </span>
       </div>
-      <div className="relative flex items-center gap-1" style={{ minWidth }} aria-label={`${subject.name} の進捗`}>
-        <TargetLine position={target} />
-        {orderedCycles.map((cycle) => (
-          <Square key={cycle.id} accuracy={cycle.accuracy} />
-        ))}
+      <div className="flex w-full flex-col gap-2 md:flex-1">
+        <div
+          className="relative flex items-center gap-1 overflow-visible"
+          style={{ width: trackWidth }}
+          aria-label={`${subject.name} の進捗`}
+        >
+          <TargetLine position={target} alignToEnd />
+          {orderedCycles.map((cycle) => (
+            <Square key={cycle.id} accuracy={cycle.accuracy} />
+          ))}
+        </div>
+        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-200 md:text-sm">
+          <span className="text-slate-500 dark:text-slate-400">目標 {target} 周</span>
+          <span>有効 {status?.effectiveCount ?? 0} 周</span>
+        </div>
       </div>
-      <div className="ml-auto text-sm font-semibold text-slate-700 dark:text-slate-200">{`${
-        status?.effectiveCount ?? 0
-      } / ${target}`}</div>
     </div>
   );
 }
