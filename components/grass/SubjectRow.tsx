@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { StudyCycle, SubjectStatus } from "@/lib/types";
 import { Subject, subjects } from "@/lib/subjects";
 import { getTargetForSubject } from "@/lib/targets";
-import Square, { SLOT_WIDTH, SQUARE_SIZE } from "./Square";
+import Square, { SLOT_WIDTH, SQUARE_GAP } from "./Square";
 import TargetLine from "./TargetLine";
 
 type SubjectRowProps = {
@@ -20,7 +20,8 @@ export default function SubjectRow({ subject, cycles, status, isPriority }: Subj
   const target = getTargetForSubject(subject);
   const orderedCycles = sortByDate(cycles);
   const maxSlots = Math.max(target, orderedCycles.length || 1);
-  const trackWidth = maxSlots * SLOT_WIDTH + SQUARE_SIZE;
+  const trackWidth = maxSlots * SLOT_WIDTH - SQUARE_GAP;
+  const slots = Array.from({ length: maxSlots }, (_, index) => orderedCycles[index]);
 
   const rowClassName = clsx(
     "flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-5 shadow-sm sm:gap-5 dark:border-slate-800/60 dark:bg-slate-900/70",
@@ -43,18 +44,16 @@ export default function SubjectRow({ subject, cycles, status, isPriority }: Subj
           </span>
         ) : null}
       </div>
-      <div className="flex flex-col items-center gap-3">
-        <div className="flex w-full justify-center">
-          <div
-            className="relative flex items-center gap-1 overflow-visible"
-            style={{ width: trackWidth }}
-            aria-label={`${subject.name} の進捗`}
-          >
-            <TargetLine position={target} alignToEnd label="目標ライン" />
-            {orderedCycles.map((cycle) => (
-              <Square key={cycle.id} accuracy={cycle.accuracy} />
-            ))}
-          </div>
+      <div className="flex flex-col items-start gap-3">
+        <div
+          className="relative flex items-center gap-[6px] overflow-visible"
+          style={{ minWidth: trackWidth }}
+          aria-label={`${subject.name} の進捗`}
+        >
+          <TargetLine position={target} />
+          {slots.map((cycle, index) => (
+            <Square key={cycle?.id ?? `empty-${index}`} accuracy={cycle?.accuracy} />
+          ))}
         </div>
         <div className="flex w-full items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-200 sm:text-sm">
           <span className="text-slate-500 dark:text-slate-400">目標 {target} 周</span>
