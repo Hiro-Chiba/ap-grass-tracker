@@ -45,3 +45,25 @@ export const aggregateKpis = (cycles: StudyCycle[]): { totalEffective: number; i
 
 export const getSubjectStatuses = (cycles: StudyCycle[]): SubjectStatus[] =>
   subjects.map((subject) => getSubjectStatus(cycles, subject.id));
+
+export const getLastAttemptDate = (cycles: StudyCycle[], subjectId: number): Date | null => {
+  const subjectCycles = cycles.filter((cycle) => cycle.subjectId === subjectId);
+  if (subjectCycles.length === 0) return null;
+
+  return subjectCycles.reduce<Date>((latest, cycle) => {
+    const current = new Date(cycle.date);
+    return current.getTime() > latest.getTime() ? current : latest;
+  }, new Date(subjectCycles[0].date));
+};
+
+export const pickPrioritySubject = (cycles: StudyCycle[], statuses: SubjectStatus[]): SubjectStatus | undefined => {
+  const candidates = statuses
+    .map((status) => ({ status, lastTriedAt: getLastAttemptDate(cycles, status.subjectId) }))
+    .filter((item) => item.lastTriedAt && !item.status.inGoal && item.status.ineffectiveCount > 0)
+    .sort((a, b) => {
+      if (!a.lastTriedAt || !b.lastTriedAt) return 0;
+      return a.lastTriedAt.getTime() - b.lastTriedAt.getTime() || a.status.subjectId - b.status.subjectId;
+    });
+
+  return candidates[0]?.status;
+};

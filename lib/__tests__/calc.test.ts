@@ -4,8 +4,11 @@ import {
   countIneffectiveCycles,
   countStagnantSubjects,
   countSubjectsInGoal,
+  getLastAttemptDate,
   getSubjectStatus,
-  isEffectiveCycle
+  getSubjectStatuses,
+  isEffectiveCycle,
+  pickPrioritySubject
 } from "../calc";
 import { subjects } from "../subjects";
 import { StudyCycle } from "../types";
@@ -49,5 +52,28 @@ describe("calc utilities", () => {
     expect(kpi.totalEffective).toBe(3);
     expect(kpi.inGoalSubjects).toBeGreaterThanOrEqual(0);
     expect(kpi.stagnantSubjects).toBeGreaterThanOrEqual(0);
+  });
+
+  test("last attempt date follows the most recent cycle", () => {
+    const date = getLastAttemptDate(
+      [
+        { id: "a1", subjectId: 1, accuracy: 60, date: "2024-01-01" },
+        { id: "a2", subjectId: 1, accuracy: 80, date: "2024-02-01" }
+      ],
+      1
+    );
+    expect(date?.toISOString().startsWith("2024-02-01")).toBe(true);
+  });
+
+  test("priority subject is the oldest unmet line with ineffective cycles", () => {
+    const priorityCycles: StudyCycle[] = [
+      { id: "p1", subjectId: 1, accuracy: 60, date: "2024-01-01" },
+      { id: "p2", subjectId: 1, accuracy: 80, date: "2024-01-02" },
+      { id: "p3", subjectId: 2, accuracy: 65, date: "2023-12-01" },
+      { id: "p4", subjectId: 3, accuracy: 50, date: "2024-01-10" }
+    ];
+    const statuses = getSubjectStatuses(priorityCycles);
+    const priority = pickPrioritySubject(priorityCycles, statuses);
+    expect(priority?.subjectId).toBe(2);
   });
 });
