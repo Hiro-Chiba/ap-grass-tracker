@@ -67,26 +67,23 @@ export default function SubjectRow({ subject, cycles, status, isPriority }: Subj
 export const SubjectRows = ({
   cycles,
   statuses,
-  prioritizedSubjectId
+  prioritizedSubjectIds
 }: {
   cycles: StudyCycle[];
   statuses: SubjectStatus[];
-  prioritizedSubjectId?: number;
+  prioritizedSubjectIds?: number[];
 }) => {
   const statusMap = new Map(statuses.map((item) => [item.subjectId, item]));
-  const subjectOrder = subjects.map((subject) => subject.id);
-
-  if (prioritizedSubjectId) {
-    const index = subjectOrder.indexOf(prioritizedSubjectId);
-    if (index > -1) {
-      subjectOrder.splice(index, 1);
-      subjectOrder.unshift(prioritizedSubjectId);
-    }
-  }
+  const prioritizedSet = new Set(prioritizedSubjectIds ?? []);
+  const prioritizedOrder = (prioritizedSubjectIds ?? []).filter((subjectId) => prioritizedSet.has(subjectId));
+  const subjectOrder = subjects
+    .map((subject) => subject.id)
+    .filter((subjectId) => !prioritizedSet.has(subjectId));
+  const ordered = [...prioritizedOrder, ...subjectOrder];
 
   return (
     <div className="space-y-2">
-      {subjectOrder.map((subjectId) => {
+      {ordered.map((subjectId) => {
         const subject = subjects.find((item) => item.id === subjectId);
         if (!subject) return null;
         return (
@@ -95,7 +92,7 @@ export const SubjectRows = ({
             subject={subject}
             cycles={cycles.filter((cycle) => cycle.subjectId === subjectId)}
             status={statusMap.get(subjectId)}
-            isPriority={prioritizedSubjectId === subjectId}
+            isPriority={prioritizedSet.has(subjectId)}
           />
         );
       })}

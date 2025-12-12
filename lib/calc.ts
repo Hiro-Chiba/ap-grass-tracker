@@ -1,3 +1,5 @@
+import { pickFireSubjects, type FireSubjectInput } from "./fire";
+import { priorityRankMap } from "./priorityRanks";
 import { subjects } from "./subjects";
 import { buildTargetMap } from "./targets";
 import type { StudyCycle, SubjectStatus } from "./types";
@@ -40,7 +42,7 @@ export const aggregateKpis = (
   const statuses = subjects.map((subject) => getSubjectStatus(cycles, subject.id));
   const inGoalSubjects = countSubjectsInGoal(statuses);
   const notInGoalSubjects = statuses.length - inGoalSubjects;
-  const prioritySubjects = pickPrioritySubject(cycles, statuses) ? 1 : 0;
+  const prioritySubjects = pickPrioritySubjects(cycles, statuses).length;
   return {
     inGoalSubjects,
     notInGoalSubjects,
@@ -61,32 +63,27 @@ export const getLastAttemptDate = (cycles: StudyCycle[], subjectId: number): Dat
   }, new Date(subjectCycles[0].date));
 };
 
-export const hasRecentEffectiveCycle = (cycles: StudyCycle[], subjectId: number, days = 7): boolean => {
-  const since = new Date();
-  since.setDate(since.getDate() - days);
+const buildFireInputs = (cycles: StudyCycle[], statuses: SubjectStatus[]): FireSubjectInput[] =>
+  statuses.map((status) => {
+    const priorityRank = priorityRankMap[status.subjectId] ?? subjects.length;
+    const lastStudiedAt = getLastAttemptDate(cycles, status.subjectId);
+    const totalCount = Math.max(status.target, 1);
+    const doneCount = status.effectiveCount;
 
-  return cycles.some(
-    (cycle) =>
-      cycle.subjectId === subjectId &&
-      isEffectiveCycle(cycle.accuracy) &&
-      new Date(cycle.date).getTime() >= since.getTime()
-  );
-};
+    return {
+      subjectId: status.subjectId,
+      priorityRank,
+      lastStudiedAt,
+      totalCount,
+      doneCount
+    };
+  });
 
-export const pickPrioritySubject = (cycles: StudyCycle[], statuses: SubjectStatus[]): SubjectStatus | undefined => {
-  const subjectOrder = subjects.map((subject) => subject.id);
+export const pickPrioritySubjects = (cycles: StudyCycle[], statuses: SubjectStatus[]) => {
+  const fireInputs = buildFireInputs(cycles, statuses);
+  const prioritized = pickFireSubjects(fireInputs);
 
-  const candidates = statuses
-    .filter((status) => status.effectiveCount < status.target)
-    .filter((status) => cycles.some((cycle) => cycle.subjectId === status.subjectId))
-    .filter((status) => !hasRecentEffectiveCycle(cycles, status.subjectId))
-    .sort((a, b) => {
-      if (a.category !== b.category) {
-        if (a.category === "technology") return -1;
-        if (b.category === "technology") return 1;
-      }
-      return subjectOrder.indexOf(a.subjectId) - subjectOrder.indexOf(b.subjectId);
-    });
-
-  return candidates[0];
+  return prioritized
+    .map((item) => statuses.find((status) => status.subjectId === item.subjectId))
+    .filter((status): status is SubjectStatus => Boolean(status));
 };
