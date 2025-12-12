@@ -7,9 +7,8 @@ import {
   getLastAttemptDate,
   getSubjectStatus,
   getSubjectStatuses,
-  hasRecentEffectiveCycle,
   isEffectiveCycle,
-  pickPrioritySubject
+  pickPrioritySubjects
 } from "../calc";
 import { subjects } from "../subjects";
 import { StudyCycle } from "../types";
@@ -52,7 +51,7 @@ describe("calc utilities", () => {
     const kpi = aggregateKpis(cycles);
     expect(kpi.inGoalSubjects).toBe(0);
     expect(kpi.notInGoalSubjects).toBe(subjects.length);
-    expect(kpi.prioritySubjects).toBe(1);
+    expect(kpi.prioritySubjects).toBe(2);
   });
 
   test("last attempt date follows the most recent cycle", () => {
@@ -66,7 +65,7 @@ describe("calc utilities", () => {
     expect(date?.toISOString().startsWith("2024-02-01")).toBe(true);
   });
 
-  test("priority subject is the stalled technology area without recent gains", () => {
+  test("priority subject is chosen based on fire score", () => {
     const daysAgo = (days: number) => {
       const date = new Date();
       date.setDate(date.getDate() - days);
@@ -81,11 +80,8 @@ describe("calc utilities", () => {
       { id: "p5", subjectId: 13, accuracy: 40, date: daysAgo(9) }
     ];
 
-    expect(hasRecentEffectiveCycle(priorityCycles, 1)).toBe(false);
-    expect(hasRecentEffectiveCycle(priorityCycles, 2)).toBe(true);
-
     const statuses = getSubjectStatuses(priorityCycles);
-    const priority = pickPrioritySubject(priorityCycles, statuses);
-    expect(priority?.subjectId).toBe(1);
+    const priority = pickPrioritySubjects(priorityCycles, statuses);
+    expect(priority.map((item) => item.subjectId)).toEqual([1, 3]);
   });
 });
