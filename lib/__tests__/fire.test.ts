@@ -8,13 +8,19 @@ import {
 } from "../fire";
 
 describe("fire score calculation", () => {
-  test("forgetting score follows discrete stages", () => {
+  test("forgetting score follows Ebbinghaus-like decay", () => {
     const reference = new Date("2024-02-10T00:00:00Z");
-    const oneDayAgo = new Date("2024-02-09T00:00:00Z");
-    const tenDaysAgo = new Date("2024-01-31T00:00:00Z");
+    const halfDayAgo = new Date("2024-02-09T12:00:00Z");
+    const twoDaysAgo = new Date("2024-02-08T00:00:00Z");
+    const oneWeekAgo = new Date("2024-02-03T00:00:00Z");
 
-    expect(calculateForgettingScore(oneDayAgo, reference)).toBe(0.4);
-    expect(calculateForgettingScore(tenDaysAgo, reference)).toBe(0.8);
+    expect(calculateForgettingScore(halfDayAgo, reference)).toBeLessThan(
+      calculateForgettingScore(twoDaysAgo, reference)
+    );
+    expect(calculateForgettingScore(twoDaysAgo, reference)).toBeLessThan(
+      calculateForgettingScore(oneWeekAgo, reference)
+    );
+    expect(calculateForgettingScore(oneWeekAgo, reference)).toBeCloseTo(0.99, 2);
     expect(calculateForgettingScore(null, reference)).toBe(1.0);
   });
 
