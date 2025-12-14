@@ -1,56 +1,46 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { sampleCycles } from "./sampleCycles";
 import { StudyCycle } from "./types";
-import { v4 as uuid } from "uuid";
-
-const STORAGE_KEY = "ap-grass-cycles";
-
-const parseStoredCycles = (stored: string | null): StudyCycle[] | null => {
-  if (!stored) return null;
-  try {
-    const parsed = JSON.parse(stored) as unknown;
-    if (Array.isArray(parsed)) {
-      return parsed as StudyCycle[];
-    }
-  } catch {
-    // 不正な JSON は無視して初期データで復旧する
-  }
-  return null;
-};
 
 export function useCycleStore() {
   const [cycles, setCycles] = useState<StudyCycle[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
-  const saveCycles = useCallback((updater: (prev: StudyCycle[]) => StudyCycle[]) => {
-    setCycles((prev) => {
-      const next = updater(prev);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  const fetchCycles = useCallback(async () => {
+    if (typeof fetch === "undefined") return;
+    try {
+      const response = await fetch("/api/cycles");
+      if (!response.ok) {
+        throw new Error("failed to fetch cycles");
       }
-      return next;
-    });
+      const data = (await response.json()) as StudyCycle[];
+      setCycles(data);
+    } catch (error) {
+      console.error("Failed to load cycles", error);
+    } finally {
+      setInitialized(true);
+    }
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    void fetchCycles();
+  }, [fetchCycles]);
 
-    saveCycles(() => {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      return parseStoredCycles(stored) ?? sampleCycles;
+  const addCycle = async (subjectId: number, accuracy: number) => {
+    const response = await fetch("/api/cycles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subjectId, accuracy })
     });
-  }, [saveCycles]);
 
-  const addCycle = (subjectId: number, accuracy: number) => {
-    const newCycle: StudyCycle = {
-      id: uuid(),
-      subjectId,
-      accuracy,
-      date: new Date().toISOString()
-    };
-    saveCycles((prev) => [newCycle, ...prev]);
+    if (!response.ok) {
+      throw new Error("failed to save cycle");
+    }
+
+    const created = (await response.json()) as StudyCycle;
+    setCycles((prev) => [created, ...prev]);
   };
 
-  return { cycles, addCycle };
+  return { cycles, addCycle, initialized };
 }
