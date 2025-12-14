@@ -1,8 +1,8 @@
-"use client";
-
 import { aggregateKpis } from "@/lib/calc";
+import { getCyclesForUser } from "@/lib/cycles";
 import { SUBJECT_COUNT } from "@/lib/subjects";
-import { useCycleStore } from "@/lib/useCycleStore";
+
+import { requireUser } from "@/lib/auth";
 
 function StatNumber({ label, value }: { label: string; value: string }) {
   return (
@@ -13,8 +13,9 @@ function StatNumber({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function StatsPage() {
-  const { cycles } = useCycleStore();
+export default async function StatsPage() {
+  const user = await requireUser();
+  const cycles = await getCyclesForUser(user.id);
   const { inGoalSubjects, notInGoalSubjects, prioritySubjects } = aggregateKpis(cycles);
 
   return (

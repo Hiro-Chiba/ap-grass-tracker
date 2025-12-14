@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export default function HomePage() {
+import { requireUser } from "@/lib/auth";
+
+export default async function HomePage() {
+  await requireUser();
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">AP Grass Tracker</h1>
@@ -16,6 +20,11 @@ export default function HomePage() {
         </Link>
         <Link className="rounded border border-slate-300 px-4 py-2 text-sm font-semibold dark:border-slate-700" href="/stats">
           KPIを確認
+        </Link>
+      </div>
+      <div className="pt-2 text-right">
+        <Link className="text-xs font-semibold text-slate-500 underline dark:text-slate-300" href="/settings">
+          設定
         </Link>
       </div>
     </div>

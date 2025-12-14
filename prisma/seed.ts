@@ -1,11 +1,15 @@
 import { PrismaClient } from "@prisma/client";
-import { subjects } from "../lib/subjects";
+
 import { seedCycleAccuracies } from "../lib/seedData";
+import { subjects } from "../lib/subjects";
+import { hashPassword } from "../lib/password";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.session.deleteMany();
   await prisma.studyCycle.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.subject.deleteMany();
 
   await prisma.subject.createMany({
@@ -13,21 +17,29 @@ async function main() {
       id: subject.id,
       name: subject.name,
       category: subject.category
-    })),
-    skipDuplicates: true
+    }))
   });
 
-  await prisma.$executeRawUnsafe(
-    `SELECT setval(pg_get_serial_sequence('"Subject"', 'id'), ${subjects.length});`
-  );
+  const demoUser = await prisma.user.create({
+    data: {
+      username: "demo",
+      passwordHash: await hashPassword("password")
+    }
+  });
 
+  const now = Date.now();
+  const oneDayMs = 24 * 60 * 60 * 1000;
   const studyCycles = seedCycleAccuracies.flatMap(({ subjectId, accuracies }) =>
-    accuracies.map((accuracy) => ({ subjectId, accuracy }))
+    accuracies.map((accuracy, index) => ({
+      subjectId,
+      accuracy,
+      userId: demoUser.id,
+      createdAt: new Date(now - index * oneDayMs)
+    }))
   );
 
   await prisma.studyCycle.createMany({
-    data: studyCycles,
-    skipDuplicates: true
+    data: studyCycles
   });
 }
 

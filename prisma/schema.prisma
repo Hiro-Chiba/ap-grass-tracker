@@ -1,13 +1,33 @@
 // Prisma schema generated according to project plans
-// Database: PostgreSQL (Vercel Storage / Neon)
+// Database: SQLite (future PostgreSQL migration possible)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+
+  sessions Session[]
+  cycles   StudyCycle[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Subject {
@@ -18,9 +38,15 @@ model Subject {
 }
 
 model StudyCycle {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   subjectId Int
-  subject   Subject  @relation(fields: [subjectId], references: [id])
-  date      DateTime @default(now())
+  userId    String
   accuracy  Int      // 0–100
+  createdAt DateTime @default(now())
+
+  subject Subject @relation(fields: [subjectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, subjectId])
+  @@index([createdAt])
 }

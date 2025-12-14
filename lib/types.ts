@@ -5,6 +5,7 @@ export type StudyCycle = {
   subjectId: number;
   accuracy: number;
   date: string;
+  userId?: string;
 };
 
 export type SubjectStatus = {
