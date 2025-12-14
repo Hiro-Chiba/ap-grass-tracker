@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
+
 import clsx from "clsx";
 
 import { StudyCycle, SubjectStatus } from "@/lib/types";
-import { Subject, subjects } from "@/lib/subjects";
+import { Category, Subject, subjects } from "@/lib/subjects";
 import { getTargetForSubject } from "@/lib/targets";
 import Square, { SLOT_WIDTH, SQUARE_GAP } from "./Square";
 import TargetLine from "./TargetLine";
@@ -64,6 +68,20 @@ export default function SubjectRow({ subject, cycles, status, isPriority }: Subj
   );
 }
 
+const categoryLabels: Record<Category, string> = {
+  technology: "TECHNOLOGY",
+  management: "MANAGEMENT",
+  strategy: "STRATEGY"
+};
+
+const categoryOrder: Category[] = ["technology", "management", "strategy"];
+
+const initialCollapsedState: Record<Category, boolean> = {
+  technology: false,
+  management: false,
+  strategy: false
+};
+
 export const SubjectRows = ({
   cycles,
   statuses,
@@ -81,19 +99,64 @@ export const SubjectRows = ({
     .filter((subjectId) => !prioritizedSet.has(subjectId));
   const ordered = [...prioritizedOrder, ...subjectOrder];
 
+  const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]));
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<Category, boolean>>(initialCollapsedState);
+
+  const sections = categoryOrder
+    .map((category) => ({
+      category,
+      subjectIds: ordered.filter((subjectId) => subjectMap.get(subjectId)?.category === category)
+    }))
+    .filter((section) => section.subjectIds.length > 0);
+
+  const toggleCategory = (category: Category) => {
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
   return (
-    <div className="space-y-2">
-      {ordered.map((subjectId) => {
-        const subject = subjects.find((item) => item.id === subjectId);
-        if (!subject) return null;
+    <div className="space-y-6">
+      {sections.map(({ category, subjectIds }) => {
+        const isCollapsed = collapsedCategories[category];
         return (
-          <SubjectRow
-            key={subjectId}
-            subject={subject}
-            cycles={cycles.filter((cycle) => cycle.subjectId === subjectId)}
-            status={statusMap.get(subjectId)}
-            isPriority={prioritizedSet.has(subjectId)}
-          />
+          <section key={category} className="space-y-3">
+            <button
+              type="button"
+              onClick={() => toggleCategory(category)}
+              className="group flex w-full items-center gap-3 rounded-xl px-1 py-2 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
+              aria-expanded={!isCollapsed}
+              aria-controls={`${category}-section`}
+            >
+              <div className="flex flex-1 items-center gap-3">
+                <span className="rounded-full bg-slate-900/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                  {categoryLabels[category]}
+                </span>
+                <div className="h-px flex-1 bg-slate-200 transition group-hover:bg-slate-300 dark:bg-slate-800 dark:group-hover:bg-slate-700" />
+              </div>
+              <span className="text-xs font-semibold text-slate-500 transition group-hover:text-slate-700 dark:text-slate-300 dark:group-hover:text-white">
+                {isCollapsed ? "開く" : "閉じる"}
+              </span>
+            </button>
+            {!isCollapsed ? (
+              <div id={`${category}-section`} className="space-y-2">
+                {subjectIds.map((subjectId) => {
+                  const subject = subjectMap.get(subjectId);
+                  if (!subject) return null;
+                  return (
+                    <SubjectRow
+                      key={subjectId}
+                      subject={subject}
+                      cycles={cycles.filter((cycle) => cycle.subjectId === subjectId)}
+                      status={statusMap.get(subjectId)}
+                      isPriority={prioritizedSet.has(subjectId)}
+                    />
+                  );
+                })}
+              </div>
+            ) : null}
+          </section>
         );
       })}
     </div>
