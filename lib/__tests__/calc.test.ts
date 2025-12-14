@@ -14,11 +14,11 @@ import { subjects } from "../subjects";
 import { StudyCycle } from "../types";
 
 const cycles: StudyCycle[] = [
-  { id: "1", subjectId: 7, accuracy: 80, date: "2024-01-01" },
-  { id: "2", subjectId: 7, accuracy: 50, date: "2024-01-02" },
-  { id: "3", subjectId: 8, accuracy: 72, date: "2024-01-03" },
-  { id: "4", subjectId: 8, accuracy: 65, date: "2024-01-04" },
-  { id: "5", subjectId: 13, accuracy: 71, date: "2024-01-05" }
+  { id: 1, subjectId: 7, accuracy: 80, date: "2024-01-01" },
+  { id: 2, subjectId: 7, accuracy: 50, date: "2024-01-02" },
+  { id: 3, subjectId: 8, accuracy: 72, date: "2024-01-03" },
+  { id: 4, subjectId: 8, accuracy: 65, date: "2024-01-04" },
+  { id: 5, subjectId: 13, accuracy: 71, date: "2024-01-05" }
 ];
 
 describe("calc utilities", () => {
@@ -57,8 +57,8 @@ describe("calc utilities", () => {
   test("last attempt date follows the most recent cycle", () => {
     const date = getLastAttemptDate(
       [
-        { id: "a1", subjectId: 1, accuracy: 60, date: "2024-01-01" },
-        { id: "a2", subjectId: 1, accuracy: 80, date: "2024-02-01" }
+        { id: 11, subjectId: 1, accuracy: 60, date: "2024-01-01" },
+        { id: 12, subjectId: 1, accuracy: 80, date: "2024-02-01" }
       ],
       1
     );
@@ -73,11 +73,11 @@ describe("calc utilities", () => {
     };
 
     const priorityCycles: StudyCycle[] = [
-      { id: "p1", subjectId: 1, accuracy: 60, date: daysAgo(12) },
-      { id: "p2", subjectId: 1, accuracy: 80, date: daysAgo(11) },
-      { id: "p3", subjectId: 2, accuracy: 75, date: daysAgo(2) },
-      { id: "p4", subjectId: 13, accuracy: 80, date: daysAgo(10) },
-      { id: "p5", subjectId: 13, accuracy: 40, date: daysAgo(9) }
+      { id: 21, subjectId: 1, accuracy: 60, date: daysAgo(12) },
+      { id: 22, subjectId: 1, accuracy: 80, date: daysAgo(11) },
+      { id: 23, subjectId: 2, accuracy: 75, date: daysAgo(2) },
+      { id: 24, subjectId: 13, accuracy: 80, date: daysAgo(10) },
+      { id: 25, subjectId: 13, accuracy: 40, date: daysAgo(9) }
     ];
 
     const statuses = getSubjectStatuses(priorityCycles);

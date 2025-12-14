@@ -1,7 +1,7 @@
 import { Category } from "./subjects";
 
 export type StudyCycle = {
-  id: string;
+  id: number;
   subjectId: number;
   accuracy: number;
   date: string;
