@@ -22,8 +22,14 @@ cp .env.example .env
 3. Prisma のマイグレーションと seed を実行し、PostgreSQL (Neon) データベースを初期化します。
 
 ```bash
-npx prisma db push
+npx prisma migrate deploy
 npx prisma db seed
+```
+
+既存のデータベースに旧スキーマのテーブルが残っている場合（`User` テーブルが存在しないなど）は、上記のマイグレーションでテーブルを張り替えるため、必要に応じて以下のコマンドで再作成してください。
+
+```bash
+npx prisma migrate reset
 ```
 
 4. 開発サーバーを起動します。
@@ -61,5 +67,6 @@ npm run dev
 ## Vercel Storage (Neon) へのデプロイと接続
 
 - Vercel の Storage で Neon を作成すると、`DATABASE_URL` が自動生成されます。
-- `.env` に `DATABASE_URL="postgresql://...?...sslmode=require"` を設定した上で、`npx prisma db push` と `npx prisma db seed` を実行してください。
+- `.env` に `DATABASE_URL="postgresql://...?...sslmode=require"` を設定した上で、`npx prisma migrate deploy` と `npx prisma db seed` を実行してください。
+  旧スキーマが残っている場合は `npx prisma migrate reset` で再作成できます。
 - CI は `.github/workflows/ci.yml` で `npm run typecheck` / `lint` / `test` / `build` を通す構成です。Neon への接続情報が必要な場合はリポジトリのシークレットに設定してください。
