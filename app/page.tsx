@@ -9,7 +9,7 @@ export default async function HomePage() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">AP Grass Tracker</h1>
       <p className="text-sm text-slate-600 dark:text-slate-300">
-        草UIと縦線だけで合格戦略を見える化する学習周回トラッカーです。
+        草UIと縦線だけで合格戦略がひと目で分かる学習周回トラッカーです。
       </p>
       <div className="flex flex-wrap gap-3">
         <Link className="rounded bg-emerald-500 px-4 py-2 text-sm font-semibold text-white" href="/grid">

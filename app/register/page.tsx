@@ -37,13 +37,13 @@ export default async function RegisterPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.08em] text-emerald-600">first run</p>
+        <p className="text-sm font-semibold tracking-[0.08em] text-emerald-600">初回セットアップ</p>
         <h1 className="text-2xl font-bold">名前とパスワードだけで開始</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">ログイン画面を挟まず、すぐ草UIへ入ります。</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">ログイン画面を挟まず、すぐに草UIへ進めます。</p>
       </div>
       <RegisterForm action={handleSubmit} />
       <div className="text-center text-xs text-slate-500 dark:text-slate-300">
-        <p>入力は一度だけ。設定は後から変更できます。</p>
+        <p>入力は最初の一度だけ。設定は後から変更できます。</p>
       </div>
     </div>
   );

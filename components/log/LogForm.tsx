@@ -13,7 +13,7 @@ const SubmitButton = () => {
       className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
       disabled={pending}
     >
-      {pending ? "送信中..." : "追加する"}
+      {pending ? "登録中..." : "追加する"}
     </button>
   );
 };
@@ -63,7 +63,7 @@ export default function LogForm({ subjects, action }: LogFormProps) {
           onChange={(e) => setAccuracy(Number(e.target.value))}
           className="w-24 rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
         />
-        <span className="text-xs text-slate-500">70%以上で有効周回</span>
+        <span className="text-xs text-slate-500">70%以上で有効周回になります</span>
       </div>
       <SubmitButton />
     </form>
