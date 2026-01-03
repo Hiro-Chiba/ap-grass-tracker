@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import RegisterForm from "@/components/auth/RegisterForm";
@@ -45,9 +44,6 @@ export default async function RegisterPage() {
       <RegisterForm action={handleSubmit} />
       <div className="text-center text-xs text-slate-500 dark:text-slate-300">
         <p>入力は一度だけ。設定は後から変更できます。</p>
-        <Link href="/onboarding" className="text-emerald-700 underline dark:text-emerald-300">
-          プロダクトの使い方を見る
-        </Link>
       </div>
     </div>
   );

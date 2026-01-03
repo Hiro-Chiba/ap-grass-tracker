@@ -1,7 +1,7 @@
 import LogForm from "@/components/log/LogForm";
 import { isEffectiveCycle } from "@/lib/calc";
 import { addCycle, getCyclesForUser } from "@/lib/cycles";
-import { subjects } from "@/lib/subjects";
+import { getSubjects } from "@/lib/subjectsStore";
 import { StudyCycle } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 
@@ -12,6 +12,7 @@ const formatDateTime = (value: string) => new Date(value).toLocaleString("ja-JP"
 export default async function LogPage() {
   const user = await requireUser();
   const cycles = await getCyclesForUser(user.id);
+  const subjects = await getSubjects();
   const latest = cycles.slice(0, 5);
 
   const handleSubmit = async (formData: FormData) => {

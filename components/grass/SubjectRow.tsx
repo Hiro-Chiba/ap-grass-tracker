@@ -5,7 +5,7 @@ import { useState } from "react";
 import clsx from "clsx";
 
 import { StudyCycle, SubjectStatus } from "@/lib/types";
-import { Category, Subject, subjects } from "@/lib/subjects";
+import { Category, Subject } from "@/lib/subjects";
 import { getTargetForSubject } from "@/lib/targets";
 import Square, { SLOT_WIDTH, SQUARE_GAP } from "./Square";
 import TargetLine from "./TargetLine";
@@ -23,9 +23,13 @@ const sortByDate = (cycles: StudyCycle[]) =>
 export default function SubjectRow({ subject, cycles, status, isPriority }: SubjectRowProps) {
   const target = getTargetForSubject(subject);
   const orderedCycles = sortByDate(cycles);
-  const maxSlots = Math.max(target, orderedCycles.length || 1);
+  const ineffectiveCycles = orderedCycles.filter((cycle) => cycle.accuracy < 70);
+  const effectiveCycles = orderedCycles.filter((cycle) => cycle.accuracy >= 70);
+  const combinedCycles = [...ineffectiveCycles, ...effectiveCycles];
+  const targetPosition = ineffectiveCycles.length + target;
+  const maxSlots = Math.max(targetPosition, combinedCycles.length || 1);
   const trackWidth = maxSlots * SLOT_WIDTH - SQUARE_GAP;
-  const slots = Array.from({ length: maxSlots }, (_, index) => orderedCycles[index]);
+  const slots = Array.from({ length: maxSlots }, (_, index) => combinedCycles[index]);
 
   const rowClassName = clsx(
     "flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-5 shadow-sm sm:gap-5 dark:border-slate-800/60 dark:bg-slate-900/70",
@@ -54,7 +58,7 @@ export default function SubjectRow({ subject, cycles, status, isPriority }: Subj
           style={{ minWidth: trackWidth }}
           aria-label={`${subject.name} の進捗`}
         >
-          <TargetLine position={target} />
+          <TargetLine position={targetPosition} />
           {slots.map((cycle, index) => (
             <Square key={cycle?.id ?? `empty-${index}`} accuracy={cycle?.accuracy} />
           ))}
@@ -84,19 +88,19 @@ const initialCollapsedState: Record<Category, boolean> = {
 
 export const SubjectRows = ({
   cycles,
+  subjects,
   statuses,
   prioritizedSubjectIds
 }: {
   cycles: StudyCycle[];
+  subjects: Subject[];
   statuses: SubjectStatus[];
   prioritizedSubjectIds?: number[];
 }) => {
   const statusMap = new Map(statuses.map((item) => [item.subjectId, item]));
   const prioritizedSet = new Set(prioritizedSubjectIds ?? []);
   const prioritizedOrder = (prioritizedSubjectIds ?? []).filter((subjectId) => prioritizedSet.has(subjectId));
-  const subjectOrder = subjects
-    .map((subject) => subject.id)
-    .filter((subjectId) => !prioritizedSet.has(subjectId));
+  const subjectOrder = subjects.map((subject) => subject.id).filter((subjectId) => !prioritizedSet.has(subjectId));
   const ordered = [...prioritizedOrder, ...subjectOrder];
 
   const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]));

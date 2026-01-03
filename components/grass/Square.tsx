@@ -9,10 +9,10 @@ export type SquareProps = {
 };
 
 const backgroundByAccuracy = (accuracy?: number) => {
-  if (accuracy === undefined) return "bg-slate-200";
+  if (accuracy === undefined) return "border border-slate-200 bg-slate-200/40";
   if (accuracy >= 80) return "bg-emerald-600";
   if (accuracy >= 70) return "bg-emerald-200";
-  return "bg-slate-200";
+  return "border border-slate-400/80 bg-transparent";
 };
 
 export default function Square({ accuracy }: SquareProps) {

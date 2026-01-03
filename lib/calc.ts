@@ -15,13 +15,17 @@ export const countEffectiveCycles = (cycles: StudyCycle[]): number =>
 export const countIneffectiveCycles = (cycles: StudyCycle[]): number =>
   cycles.filter((cycle) => !isEffectiveCycle(cycle.accuracy)).length;
 
-export const getSubjectStatus = (cycles: StudyCycle[], subjectId: number): SubjectStatus => {
-  const targetMap = buildTargetMap(subjects);
+export const getSubjectStatus = (
+  cycles: StudyCycle[],
+  subjectId: number,
+  subjectList: typeof subjects = subjects
+): SubjectStatus => {
+  const targetMap = buildTargetMap(subjectList);
   const subjectCycles = cycles.filter((cycle) => cycle.subjectId === subjectId);
   const effective = countEffectiveCycles(subjectCycles);
   const ineffective = countIneffectiveCycles(subjectCycles);
   const target = targetMap[subjectId];
-  const subject = subjects.find((item) => item.id === subjectId);
+  const subject = subjectList.find((item) => item.id === subjectId);
 
   return {
     subjectId,
@@ -40,9 +44,10 @@ export const countStagnantSubjects = (statuses: SubjectStatus[]): number =>
   statuses.filter((status) => status.effectiveCount === 0 && status.ineffectiveCount > 0).length;
 
 export const aggregateKpis = (
-  cycles: StudyCycle[]
+  cycles: StudyCycle[],
+  subjectList: typeof subjects = subjects
 ): { inGoalSubjects: number; notInGoalSubjects: number; prioritySubjects: number } => {
-  const statuses = subjects.map((subject) => getSubjectStatus(cycles, subject.id));
+  const statuses = subjectList.map((subject) => getSubjectStatus(cycles, subject.id, subjectList));
   const inGoalSubjects = countSubjectsInGoal(statuses);
   const notInGoalSubjects = statuses.length - inGoalSubjects;
   const prioritySubjects = pickPrioritySubjects(cycles, statuses).length;
@@ -53,8 +58,10 @@ export const aggregateKpis = (
   };
 };
 
-export const getSubjectStatuses = (cycles: StudyCycle[]): SubjectStatus[] =>
-  subjects.map((subject) => getSubjectStatus(cycles, subject.id));
+export const getSubjectStatuses = (
+  cycles: StudyCycle[],
+  subjectList: typeof subjects = subjects
+): SubjectStatus[] => subjectList.map((subject) => getSubjectStatus(cycles, subject.id, subjectList));
 
 export const getLastAttemptDate = (cycles: StudyCycle[], subjectId: number): Date | null => {
   const subjectCycles = cycles.filter((cycle) => cycle.subjectId === subjectId);
