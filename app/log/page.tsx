@@ -31,7 +31,7 @@ export default async function LogPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold">周回記録</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">分野を選択し、正答率を入力して1タップで追加。</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">分野を選んで正答率を入力し、1タップで追加できます。</p>
       </div>
 
       <LogForm subjects={subjects} action={handleSubmit} />

@@ -64,7 +64,7 @@ export default function RegisterForm({ action }: RegisterFormProps) {
       ) : null}
       <SubmitButton />
       <p className="text-xs text-slate-500 dark:text-slate-300">
-        初回はそのまま登録し、2回目以降は同じ名前とパスワードで続きから利用できます。
+        初回はそのまま登録し、次回以降は同じ名前とパスワードで続きから使えます。
       </p>
     </form>
   );

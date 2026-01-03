@@ -6,7 +6,7 @@ import ThemeToggle from "../components/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "AP Grass Tracker",
-  description: "応用情報技術者試験のための学習周回トラッカー"
+  description: "応用情報技術者試験の学習周回を記録するトラッカー"
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

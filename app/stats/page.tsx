@@ -25,7 +25,7 @@ export default async function StatsPage() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">迷ったら、未達と🔥を埋める。</p>
+      <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">迷ったら、未達と🔥から埋めよう。</p>
       <div className="grid gap-4 sm:grid-cols-3">
         <StatNumber label="合格分野数" value={`${inGoalSubjects} / ${subjects.length}`} />
         <StatNumber label="未達分野数" value={`${notInGoalSubjects}`} />
