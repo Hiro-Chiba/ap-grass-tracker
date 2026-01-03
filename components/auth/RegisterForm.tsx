@@ -51,7 +51,9 @@ export default function RegisterForm({ action }: RegisterFormProps) {
           name="password"
           type="password"
           className="w-full rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-          placeholder="非公開の合言葉"
+          placeholder="6〜64文字"
+          minLength={6}
+          maxLength={64}
           required
         />
       </div>

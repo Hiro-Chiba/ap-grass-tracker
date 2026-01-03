@@ -1,3 +1,4 @@
+import { priorityRankMap } from "./priorityRanks";
 import { subjects, type Subject } from "./subjects";
 
 export type FireSubjectInput = {
@@ -13,11 +14,15 @@ export type FireSubjectResult = FireSubjectInput & {
   forgettingFactor: number;
   shortageFactor: number;
   importanceWeight: number;
+  priorityWeight: number;
+  priorityRank: number | null;
   fireScore: number;
 };
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 const EBBINGHAUS_DECAY_DAYS = 1.5; // 1.5日で記憶保持率がおよそ半減する近似値
+const MAX_PRIORITY_RANK = Math.max(...Object.values(priorityRankMap));
+const PRIORITY_WEIGHT_RANGE = 0.3;
 
 const getDaysSince = (lastEffectiveAt: Date | null, referenceDate: Date): number | null => {
   if (!lastEffectiveAt) return null;
@@ -47,6 +52,17 @@ export const calculateImportanceWeight = (subjectId: number): number => {
   return 1.0;
 };
 
+export const calculatePriorityWeight = (subjectId: number): { rank: number | null; weight: number } => {
+  const rank = priorityRankMap[subjectId] ?? null;
+  if (!rank) return { rank, weight: 1.0 };
+  if (MAX_PRIORITY_RANK <= 1) return { rank, weight: 1.0 };
+
+  const normalized = (MAX_PRIORITY_RANK - rank) / (MAX_PRIORITY_RANK - 1);
+  const weight = 1 + normalized * PRIORITY_WEIGHT_RANGE;
+
+  return { rank, weight };
+};
+
 export const calculateForgettingFactor = (lastEffectiveAt: Date | null, referenceDate = new Date()): number => {
   const days = getDaysSince(lastEffectiveAt, referenceDate);
   const linearFactor = days === null ? 1.5 : Math.min(1.5, 1 + days / 7);
@@ -70,8 +86,9 @@ export const calculateFireScore = (input: FireSubjectInput, referenceDate = new 
   const importanceWeight = calculateImportanceWeight(input.subjectId);
   const forgettingFactor = calculateForgettingFactor(input.lastEffectiveAt, referenceDate);
   const shortageFactor = calculateShortageFactor(input.effectiveLaps, input.targetLaps);
+  const { weight: priorityWeight } = calculatePriorityWeight(input.subjectId);
 
-  return importanceWeight * forgettingFactor * shortageFactor;
+  return importanceWeight * priorityWeight * forgettingFactor * shortageFactor;
 };
 
 export const pickFireSubjects = (
@@ -82,14 +99,19 @@ export const pickFireSubjects = (
   const scored = inputs.map<FireSubjectResult>((input) => {
     const daysSinceLastEffective = getDaysSince(input.lastEffectiveAt, referenceDate);
     const importanceWeight = calculateImportanceWeight(input.subjectId);
+    const { rank: priorityRank, weight: priorityWeight } = calculatePriorityWeight(input.subjectId);
     const forgettingFactor = calculateForgettingFactor(input.lastEffectiveAt, referenceDate);
     const shortageFactor = calculateShortageFactor(input.effectiveLaps, input.targetLaps);
-    const fireScore = input.studiedToday ? 0 : importanceWeight * forgettingFactor * shortageFactor;
+    const fireScore = input.studiedToday
+      ? 0
+      : importanceWeight * priorityWeight * forgettingFactor * shortageFactor;
 
     return {
       ...input,
       daysSinceLastEffective,
       importanceWeight,
+      priorityWeight,
+      priorityRank,
       forgettingFactor,
       shortageFactor,
       fireScore
@@ -100,6 +122,11 @@ export const pickFireSubjects = (
     .filter((item) => item.shortageFactor > 0 && !item.studiedToday)
     .sort((a, b) => {
       if (b.fireScore !== a.fireScore) return b.fireScore - a.fireScore;
+      if (a.priorityRank !== b.priorityRank) {
+        if (a.priorityRank === null) return 1;
+        if (b.priorityRank === null) return -1;
+        return a.priorityRank - b.priorityRank;
+      }
       if (b.importanceWeight !== a.importanceWeight) return b.importanceWeight - a.importanceWeight;
       const aTime = a.lastEffectiveAt ? a.lastEffectiveAt.getTime() : -Infinity;
       const bTime = b.lastEffectiveAt ? b.lastEffectiveAt.getTime() : -Infinity;

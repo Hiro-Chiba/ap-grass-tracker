@@ -3,6 +3,7 @@ import {
   calculateForgettingFactor,
   calculateForgettingScore,
   calculateImportanceWeight,
+  calculatePriorityWeight,
   calculateShortageFactor,
   pickFireSubjects,
   type FireSubjectInput
@@ -33,6 +34,16 @@ describe("fire score calculation", () => {
     expect(calculateImportanceWeight(3)).toBe(1.0);
     expect(calculateImportanceWeight(14)).toBe(0.9);
     expect(calculateImportanceWeight(17)).toBe(0.8);
+  });
+
+  test("priority weight follows rank map", () => {
+    const { rank, weight } = calculatePriorityWeight(9);
+    expect(rank).toBe(1);
+    expect(weight).toBeGreaterThan(1);
+
+    const unknown = calculatePriorityWeight(999);
+    expect(unknown.rank).toBeNull();
+    expect(unknown.weight).toBe(1);
   });
 
   test("fire subjects are ranked by fire score with tie breakers", () => {

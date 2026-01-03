@@ -7,6 +7,10 @@ import { hashPassword, verifyPasswordHash } from "./password";
 
 const SESSION_COOKIE_NAME = "agt-session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+const USERNAME_MIN_LENGTH = 3;
+const USERNAME_MAX_LENGTH = 20;
+const PASSWORD_MIN_LENGTH = 6;
+const PASSWORD_MAX_LENGTH = 64;
 
 const buildCookieOptions = () => ({
   httpOnly: true,
@@ -24,6 +28,26 @@ const setSessionCookie = (token: string) => {
 
 const clearSessionCookie = () => {
   cookies().delete(SESSION_COOKIE_NAME);
+};
+
+const validateUsername = (username: string) => {
+  const trimmed = username.trim();
+  if (!trimmed) {
+    throw new Error("ユーザー名を入力してください");
+  }
+  if (trimmed.length < USERNAME_MIN_LENGTH || trimmed.length > USERNAME_MAX_LENGTH) {
+    throw new Error(`ユーザー名は${USERNAME_MIN_LENGTH}〜${USERNAME_MAX_LENGTH}文字で入力してください`);
+  }
+  return trimmed;
+};
+
+const validatePassword = (password: string) => {
+  if (!password) {
+    throw new Error("パスワードを入力してください");
+  }
+  if (password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
+    throw new Error(`パスワードは${PASSWORD_MIN_LENGTH}〜${PASSWORD_MAX_LENGTH}文字で入力してください`);
+  }
 };
 
 export const getCurrentUser = async () => {
@@ -55,6 +79,7 @@ export const requireUser = async () => {
 };
 
 const createSessionForUser = async (userId: string) => {
+  await prisma.session.deleteMany({ where: { userId } });
   const token = randomBytes(32).toString("hex");
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
@@ -71,10 +96,8 @@ const createSessionForUser = async (userId: string) => {
 };
 
 export const registerUser = async (username: string, password: string) => {
-  const trimmedUsername = username.trim();
-  if (!trimmedUsername || !password) {
-    throw new Error("ユーザー名とパスワードを入力してください");
-  }
+  const trimmedUsername = validateUsername(username);
+  validatePassword(password);
 
   const existing = await prisma.user.findUnique({ where: { username: trimmedUsername } });
   if (existing) {
@@ -94,7 +117,11 @@ export const registerUser = async (username: string, password: string) => {
 };
 
 export const loginUser = async (username: string, password: string) => {
-  const user = await prisma.user.findUnique({ where: { username: username.trim() } });
+  const trimmedUsername = username.trim();
+  if (!trimmedUsername || !password) {
+    throw new Error("ユーザー名とパスワードを入力してください");
+  }
+  const user = await prisma.user.findUnique({ where: { username: trimmedUsername } });
   if (!user) {
     throw new Error("ユーザーが見つかりません");
   }
@@ -119,11 +146,13 @@ export const changePassword = async (userId: string, currentPassword: string, ne
     throw new Error("現在のパスワードが一致しません");
   }
 
+  validatePassword(newPassword);
   const passwordHash = await hashPassword(newPassword);
   await prisma.user.update({
     where: { id: userId },
     data: { passwordHash }
   });
+  await createSessionForUser(userId);
 };
 
 export const logoutUser = async () => {

@@ -28,9 +28,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href="/stats" className="hover:underline">
                 統計
               </Link>
-              <Link href="/onboarding" className="hover:underline">
-                オンボーディング
-              </Link>
             </nav>
             <ThemeToggle />
           </div>
